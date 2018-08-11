@@ -11,5 +11,84 @@
     <div>
       <%- xss %>  
     </div>
+    <textarea name="name" id="text" cols="30" rows="10">
+      <img src="null" onerror='alert(document.cookie)' />
+    </textarea>
+    <button type="button" id="submit">评论</button>
+    <button type="button" id="getComment">获取评论</button>
   </body>
+  <script type="text/javascript" src="javascripts/htmlparser.js"></script>
+  <script type="text/javascript" src="javascripts/he.js"></script>
+  <script>
+    function parse(str){
+      let results = ''
+      try {
+        htmlParse(he.unescape(str, {strict: true}), {
+          start: function(tag, attrs, unary) {
+            if (tag == 'script'||tag == 'style'|| tag == 'img' || tag == 'link' || tag == 'iframe') {
+              return false
+            }
+            results += "<" + tag
+            for (var i = 0; i < attrs.length; i++) {
+              results += " " + attrs[i].name + '="' + attrs[i].escaped + '"'
+            }
+            results += ">"
+          },
+          end: function(tag) {
+            results += "</" + tag + ">"
+          },
+          chars: function(text) {
+            results += text
+          },
+          comment: function(text) {
+            results += "<!--" + text + "-->"
+          }
+        })
+      } catch (error) {
+        console.log(error)
+      } finally {
+        console.log('complete')
+      }
+    }
+  </script>
+  <script>
+    let btn = document.getElementById('submit')
+    let getComment = document.getElementById('getComment')
+    let text = document.getElementById('text')
+
+    btn.addEventListener('click',function(){
+      let xhr = new XMLHttpRequest()
+      let url = '/comment?comment='+text.value
+      xhr.onreadystatechange = function(){
+        if(xhr.readyState == 4){
+          if(xhr.status == 200){
+            console.log('success')
+          }else{
+            console.log('error')
+          }
+        }
+      }
+      xhr.open('get', url, true)
+      xhr.send(null)
+    },false)
+
+    getComment.addEventListener('click',function(){
+      let xhr = new XMLHttpRequest()
+      let url = '/getComment'
+      xhr.open('get', url, true);
+      xhr.onreadystatechange = function(){
+        if(xhr.readyState == 4){
+          if(xhr.status == 200){
+            let dom = parse(JSON.parse(xhr.response).comment)
+            let txt = document.createElement('span')
+            text.innerHTML = dom
+            document.body.appendChild(txt)
+          }else{
+            console.log('error')
+          }
+        }
+      }
+      xhr.send(null)
+    },false)
+  </script>
 </html>

@@ -30,6 +30,9 @@ router.get('/', function(req, res, next) {
 /* GET comment page. */
 router.get('/comment', function(req, res, next) {
   comment.v = html_encode(req.query.comment);
+  res.json({
+    success: true
+  })
 });
 
 /* GET comment data. */
